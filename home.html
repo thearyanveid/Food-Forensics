@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FoodForensics</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:"Courier New", monospace;
+color:#00ff66;
+}
+
+body{
+background:black;
+}
+
+/* NAVBAR */
+
+.navbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:15px 40px;
+border-bottom:2px solid #00ff66;
+}
+
+.logo{
+font-size:40px;
+font-weight:bold;
+letter-spacing:3px;
+}
+
+.nav-buttons button{
+margin-left:10px;
+padding:10px 18px;
+background:black;
+border:1px solid #00ff66;
+cursor:pointer;
+font-size:14px;
+}
+
+.nav-buttons button:hover{
+background:#00ff66;
+color:black;
+}
+
+/* MAIN SECTION */
+
+.container{
+max-width:1050px;
+margin:auto;
+padding:40px 20px;
+}
+
+/* INTRO BOX */
+
+.intro{
+border:1px dashed #00ff66;
+padding:25px;
+margin-bottom:35px;
+}
+
+.intro h1{
+font-size:30px;
+margin-bottom:15px;
+}
+
+.intro p{
+line-height:1.6;
+font-size:16px;
+}
+
+/* FEATURES */
+
+.features{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:25px;
+}
+
+.feature-box{
+border:1px dashed #00ff66;
+padding:20px;
+transition:.3s;
+font-size:15px;
+}
+
+.feature-box:hover{
+box-shadow:0 0 12px #00ff66;
+transform:scale(1.05);
+}
+
+.feature-box h3{
+margin-bottom:10px;
+font-size:18px;
+}
+
+/* FOOTER */
+
+.footer{
+border-top:2px solid #00ff66;
+text-align:center;
+padding:15px;
+margin-top:40px;
+font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+
+<div class="logo">
+FOODFORENSICS
+</div>
+
+<div class="nav-buttons">
+<button onclick="window.location.href='login.php'">Login</button>
+<button onclick="window.location.href='register.php'">Register</button>
+</div>
+
+</div>
+
+<div class="container">
+
+<div class="intro">
+<h1>Welcome to FoodForensics</h1>
+
+<p>
+FoodForensics is an intelligent food analysis platform designed to help
+consumers understand the nutritional quality and potential health risks
+of packaged foods.
+</p>
+
+<br>
+
+<p>
+By using technologies such as <b>AI analysis, barcode scanning, and OCR
+image processing</b>, our system extracts ingredient and nutrition
+information directly from product labels and evaluates them based on
+health standards.
+</p>
+</div>
+
+<div class="features">
+
+<div class="feature-box">
+<h3>Product Scanning</h3>
+<p>
+Upload food label images or scan barcodes to automatically extract
+ingredient and nutrition information using AI-powered OCR.
+</p>
+</div>
+
+<div class="feature-box">
+<h3>Health Risk Analysis</h3>
+<p>
+Our system evaluates products for high sugar, sodium, harmful
+additives, and other risk factors to generate a health risk score.
+</p>
+</div>
+
+<div class="feature-box">
+<h3>Ingredient Intelligence</h3>
+<p>
+Detect harmful preservatives, artificial colors, sweeteners,
+and allergens that may affect your health.
+</p>
+</div>
+
+<div class="feature-box">
+<h3>Personalized Insights</h3>
+<p>
+Get recommendations based on your dietary goals, allergies,
+and medical conditions.
+</p>
+</div>
+
+<div class="feature-box">
+<h3>Healthier Alternatives</h3>
+<p>
+Discover better product options with lower risk scores
+and healthier nutritional values.
+</p>
+</div>
+
+<div class="feature-box">
+<h3>Nutrition Tracking</h3>
+<p>
+Track your daily nutrient intake and monitor your health
+using AI-driven insights and analytics.
+</p>
+</div>
+
+</div>
+
+</div>
+
+<div class="footer">
+FoodForensics | Smart Food Analysis System
+</div>
+
+</body>
+</html>

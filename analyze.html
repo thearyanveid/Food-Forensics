@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FoodForensics – Analyze</title>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+<script src="https://unpkg.com/@zxing/library@latest"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Courier New",monospace;color:#00ff66;}
+body{background:black;}
+.navbar{display:flex;justify-content:space-between;align-items:center;padding:15px 40px;border-bottom:2px solid #00ff66;}
+.logo{font-size:40px;font-weight:bold;letter-spacing:3px;}
+.nav-links button{padding:8px 15px;background:black;border:1px solid #00ff66;cursor:pointer;}
+.nav-links button:hover{background:#00ff66;color:black;}
+.main{height:85vh;display:flex;justify-content:center;align-items:center;}
+.container{width:550px;border:2px dashed #00ff66;padding:20px;display:flex;flex-direction:column;}
+.header{text-align:center;margin-bottom:20px;font-size:22px;}
+.input-group{margin-bottom:14px;}
+label{display:block;margin-bottom:6px;font-size:13px;}
+input, textarea{width:100%;padding:9px;background:#000;border:1px solid #00ff66;outline:none;font-size:13px;border-radius:4px;}
+input:focus, textarea:focus{box-shadow:0 0 8px #00ff66;}
+.btn{width:100%;padding:9px;background:#000;border:1px solid #00ff66;cursor:pointer;margin-top:6px;font-size:13px;border-radius:4px;}
+.btn:hover{background:#00ff66;color:#000;}
+.camera-box{width:100%;height:120px;border:2px solid #00ff66;border-radius:8px;overflow:hidden;margin-top:10px;background:#000;position:relative;}
+.camera-box video{width:100%;height:100%;object-fit:cover;}
+.scan-line{position:absolute;left:0;width:100%;height:3px;background:red;box-shadow:0 0 10px red;animation:scan 2s linear infinite;display:none;}
+@keyframes scan{0%{top:0%}50%{top:95%}100%{top:0%}}
+.status{margin-top:12px;font-size:13px;white-space:pre-line;}
+.error{color:#ff4d4d;} .success{color:#00ff66;} .warning{color:#ffcc00;}
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+<div class="logo">FOODFORENSICS</div>
+<div class="nav-links">
+<button onclick="location.href='dashboard.php'">Dashboard</button>
+</div>
+</div>
+
+<div class="main">
+<div class="container">
+
+<div class="header">Analyze Product</div>
+
+<div class="input-group">
+<label>DETECTED INGREDIENTS & ALLERGENS:</label>
+<textarea id="textInput" rows="5"></textarea>
+</div>
+
+<div class="input-group">
+<label>UPLOAD PRODUCT IMAGE:</label>
+<input type="file" id="imageInput" accept="image/*">
+</div>
+
+<div class="input-group">
+<label>ENTER BARCODE NUMBER:</label>
+<input type="text" id="barcodeInput">
+</div>
+
+<button class="btn" onclick="startBarcodeScanner()">SCAN BARCODE</button>
+
+<div class="camera-box">
+<video id="barcodeVideo"></video>
+<div class="scan-line" id="scanLine"></div>
+</div>
+
+<button class="btn" onclick="analyzeProduct()">ANALYZE PRODUCT</button>
+
+<div id="statusMsg" class="status"></div>
+
+</div>
+</div>
+
+<script>
+let codeReader=null;
+
+/* ================= OCR IMAGE ================= */
+imageInput.addEventListener("change", async function(){
+const file=this.files[0];
+if(!file) return;
+
+showMsg("Scanning image for ingredients...","success");
+
+try{
+const result=await Tesseract.recognize(file,'eng');
+const text=result.data.text;
+
+const ingredients=extractIngredients(text);
+const allergens=extractAllergens(text);
+
+let output="";
+if(ingredients) output+="INGREDIENTS:\n"+ingredients;
+if(allergens) output+="\n\nALLERGENS:\n"+allergens;
+
+textInput.value=output;
+showMsg("Detection complete","success");
+
+}catch{
+showMsg("OCR failed","error");
+}
+});
+
+/* ================= CLEAN ================= */
+function cleanLine(t){
+return t.replace(/\n/g," ")
+.replace(/\s+/g," ")
+.replace(/[^a-zA-Z0-9,()&.%\- ]/g,"")
+.trim();
+}
+
+/* ================= INGREDIENTS ================= */
+function extractIngredients(text){
+const m=text.match(/ingredients?[:\-]?\s*([\s\S]{0,1200})/i);
+if(!m) return "";
+return cleanLine(
+m[1].split(/allerg|contain|nutrition|manufact|marketed/i)[0]
+);
+}
+
+/* ================= ALLERGENS ================= */
+function extractAllergens(text){
+const lines=text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+
+const stopWords=["ingredient","nutrition","energy","protein","fat",
+"carbohydrate","manufactured","manufacturer","marketed","address","fssai","batch","mrp"];
+
+for(let i=0;i<lines.length;i++){
+const lower=lines[i].toLowerCase();
+
+if(lower.includes("aller") || lower.includes("contain")){
+let collected=[];
+for(let j=i;j<lines.length && j<=i+4;j++){
+const test=lines[j].toLowerCase();
+if(j>i && stopWords.some(w=>test.includes(w))) break;
+collected.push(lines[j]);
+}
+
+let combined=collected.join(" ")
+.replace(/allergens?:?/ig,"")
+.replace(/may\s*contain\w*:?/ig,"")
+.replace(/contain\w*:?/ig,"")
+.replace(/\b(delhi|india|noida|mumbai|pincode)\b/ig,"")
+.replace(/[^a-zA-Z0-9,()& ]/g," ")
+.replace(/\s+/g," ")
+.trim();
+
+if(combined.length>5) return combined;
+}
+}
+return "";
+}
+
+/* ================= BARCODE ================= */
+async function startBarcodeScanner(){
+try{
+const hints=new Map();
+hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
+ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,
+ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.UPC_E
+]);
+
+codeReader=new ZXing.BrowserMultiFormatReader(hints);
+scanLine.style.display="block";
+showMsg("Scanning barcode...","success");
+
+const result=await codeReader.decodeOnceFromVideoDevice(undefined,"barcodeVideo");
+
+if(result){
+barcodeInput.value=result.text;
+showMsg("Barcode detected","success");
+codeReader.reset();
+if(barcodeVideo.srcObject){
+barcodeVideo.srcObject.getTracks().forEach(t=>t.stop());
+barcodeVideo.srcObject=null;
+}
+scanLine.style.display="none";
+}
+}catch{
+showMsg("Barcode scan failed","error");
+scanLine.style.display="none";
+}
+}
+
+/* ================= ANALYZE + SAVE ================= */
+async function analyzeProduct(){
+
+const text=textInput.value.trim();
+const barcode=barcodeInput.value.trim();
+const imageFile=imageInput.files[0];
+
+if(!text && !barcode && !imageFile){
+showMsg("NO INPUT PROVIDED","error");
+return;
+}
+
+showMsg("Analyzing and saving...","success");
+
+let ingredients="",allergens="";
+if(text){
+const parts=text.split("ALLERGENS:");
+ingredients=parts[0].replace("INGREDIENTS:","").trim();
+if(parts[1]) allergens=parts[1].trim();
+}
+
+const fd=new FormData();
+fd.append("ingredients",ingredients);
+fd.append("allergens",allergens);
+fd.append("barcode",barcode);
+if(imageFile) fd.append("image",imageFile);
+
+try{
+const res=await fetch("save_product.php",{method:"POST",body:fd});
+const msg=await res.text();
+
+if(msg.trim()==="success")
+showMsg("ANALYSIS COMPLETE & SAVED ✅","success");
+else
+showMsg("Save failed ❌","error");
+
+}catch{
+showMsg("Server error ❌","error");
+}
+}
+
+/* ================= MESSAGE ================= */
+function showMsg(m,t){
+statusMsg.className="status "+t;
+statusMsg.textContent=m;
+}
+</script>
+
+</body>
+</html>
